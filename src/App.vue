@@ -1,16 +1,16 @@
 <template>
   <div id="app">
-    <VuedeoCall />
+    <HelloWorld />
   </div>
 </template>
 
 <script>
-import VuedeoCall from './components/VuedeoCall'
+import HelloWorld from './components/HelloWorld'
 
 export default {
   name: 'app',
   components: {
-    VuedeoCall
+    HelloWorld
   }
 }
 </script>
