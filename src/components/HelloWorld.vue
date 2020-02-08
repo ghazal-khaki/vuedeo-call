@@ -38,14 +38,12 @@ export default {
       this.localPeerConnection.addEventListener(
         'iceconnectionstatechange',
         this.handleConnectionChange)
-
       this.remotePeerConnection = new RTCPeerConnection(this.servers)
       console.log('remote peer connection has been created')
       this.remotePeerConnection.addEventListener('icecandidate', this.handleConnection)
       this.remotePeerConnection.addEventListener(
         'iceconnectionstatechange',
         this.handleConnectionChange)
-
       this.remotePeerConnection.addEventListener('addstream', this.gotRemoteMediaStream)
 
       this.localPeerConnection.addStream(this.localStream)
@@ -53,8 +51,9 @@ export default {
 
       console.log('localPeerConnection create offer start')
       this.localPeerConnection.createOffer({
-        offerToReceiveVideo: 1
-      }).then(this.createdOffer).catch()
+        offerToReceiveVideo: 1,
+        offerToReceiveAudio: 1
+      }).then(this.createdOffer).catch(() => { console.log('error on create offer') })
     },
     handleConnection (event) {
       console.log(event)
@@ -64,7 +63,6 @@ export default {
         const newIceCandidate = new RTCIceCandidate(iceCandidate)
         const otherPeer = this.getOtherPeer(peerConnection)
         console.log(otherPeer)
-        debugger
         otherPeer.addIceCandidate(newIceCandidate)
           .then(() => {
             console.log('addIceCandidate success')
@@ -80,29 +78,31 @@ export default {
       console.log('ICE state change event: ', peerConnection.iceConnectionState)
     },
     gotRemoteMediaStream (event) {
-      const mediaStream = event.localStream
-      this.remoteStream = mediaStream
+      this.remoteStream.srcObject = event.stream
     },
     createdOffer (description) {
+      console.log(description)
       this.localPeerConnection.setLocalDescription(description)
         .then()
-        .catch()
-
+        .catch(() => { console.log('err on local set local description') })
       this.remotePeerConnection.setRemoteDescription(description)
         .then()
-        .catch()
-
+        .catch(() => { console.log('err on remote set remote description') })
       this.remotePeerConnection.createAnswer()
         .then(this.createdAnswer)
-        .catch()
+        .catch(() => { console.log('err on remote createAnswer') })
     },
     createdAnswer (description) {
       this.remotePeerConnection.setLocalDescription(description)
         .then()
         .catch()
+      this.localPeerConnection.setRemoteDescription(description)
+        .then()
+        .catch()
     },
     getOtherPeer (peerConnection) {
-      return (peerConnection === this.localPeerConnection) ? this.localPeerConnection : this.remotePeerConnection
+      return (peerConnection === this.localPeerConnection)
+        ? this.remotePeerConnection : this.localPeerConnection
     }
   },
   mounted () {
@@ -112,7 +112,7 @@ export default {
         this.localStream = resp
         console.log('Received local stream')
       }).catch(err => console.log(err))
-    this.remoteStream = document.querySelector('#callee').srcObject
+    this.remoteStream = document.getElementById('callee')// document.querySelector('#callee').srcObject
   }
 }
 </script>
